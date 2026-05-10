@@ -138,7 +138,23 @@ def forwardBFS(problem: Problem) -> list[Action]:
          avoid revisiting the same state twice (graph search, not tree search).
     """
     ### Your code here ###
+    queue = Queue()
+    start = problem.getStartState() # para cada item tenemos (current state, actions take son far)
+    queue.push((start, [])) # No re visitamos estados, para eso usamos un set 
+    visited = {start}
 
+    while not queue.isEmpty():
+        state, actions = queue.pop()
+
+        if problem.isGoalState(state):
+            return actions  # Acá encontramos un plan valido 
+
+        for next_state, action, cost in problem.getSuccessors(state):
+            if next_state not in visited:
+                visited.add(next_state)
+                queue.push((next_state, actions + [action]))
+
+    return [] # Acá no encontramos un plan valido
     ### End of your code ###
 
 
