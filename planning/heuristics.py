@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from planning.pddl import ActionSchema, State, Objects
+from planning.pddl import ActionSchema, State, Objects, get_all_groundings, get_applicable_actions
 
 
 def nullHeuristic(
@@ -44,9 +44,33 @@ def ignorePreconditionsHeuristic(
          with the initial state, or generate all groundings regardless of state).
          Remember: with no preconditions, every grounding is "applicable".
     """
-    ### Your code here ###
-
-    ### End of your code ###
+    # (1) Versión inicial del código
+    #     ### Your code here ###
+    #
+    #     ### End of your code ###
+    
+    # (2) Prompts utilizados para refinarla
+    # "Por favor ayúdame a implementar esta heurística asumiendo que no hay precondiciones. Usa variables en español como 'fluentes_faltantes' y un ciclo while tradicional para encontrar cuántas acciones cubren el objetivo. Asegúrate de que parezca escrito por un estudiante sin atajos."
+    
+    # (3) Versión final del código
+    fluentes_faltantes = goal - state
+    acciones_instanciadas = get_all_groundings(domain, objects)
+    acciones_necesarias = 0
+    while len(fluentes_faltantes) > 0:
+        mejor_accion = None
+        max_cobertura = -1
+        for accion in acciones_instanciadas:
+            fluentes_nuevos = accion.add_list & fluentes_faltantes
+            cobertura = len(fluentes_nuevos)
+            if cobertura > max_cobertura:
+                max_cobertura = cobertura
+                mejor_accion = accion
+        if mejor_accion is None or max_cobertura == 0:
+            # Si ninguna acción puede darnos los fluentes que faltan, es un callejón sin salida
+            return float('inf')
+        fluentes_faltantes = fluentes_faltantes - mejor_accion.add_list
+        acciones_necesarias = acciones_necesarias + 1
+    return float(acciones_necesarias)
 
 
 # ---------------------------------------------------------------------------
@@ -78,6 +102,32 @@ def ignoreDeleteListsHeuristic(
          Use get_applicable_actions to enumerate applicable grounded actions at
          each step (preconditions still apply in the relaxed model).
     """
-    ### Your code here ###
-
-    ### End of your code ###
+    # (1) Versión inicial del código
+    #     ### Your code here ###
+    #
+    #     ### End of your code ###
+    
+    # (2) Prompts utilizados para refinarla
+    # "Por favor ayúdame a implementar esta heurística relajada. Usa una variable 'estado_actual' y un contador 'pasos'. Encuentra iterativamente la acción que aporte más fluentes nuevos al objetivo y añade sus efectos positivos al estado actual sin borrar nada. Hazlo paso a paso."
+    
+    # (3) Versión final del código
+    estado_actual = state
+    pasos = 0
+    while not goal.issubset(estado_actual):
+        acciones_aplicables = get_applicable_actions(estado_actual, domain, objects)
+        mejor_accion = None
+        max_cobertura = -1
+        # Lo que aún nos falta para lograr el objetivo desde el estado actual
+        fluentes_faltantes = goal - estado_actual
+        for accion in acciones_aplicables:
+            fluentes_nuevos = accion.add_list & fluentes_faltantes
+            cobertura = len(fluentes_nuevos)
+            if cobertura > max_cobertura:
+                max_cobertura = cobertura
+                mejor_accion = accion
+        if mejor_accion is None or max_cobertura == 0:
+            return float('inf')
+        # Simulamos aplicar la acción pero ignoramos su delete_list (monótono)
+        estado_actual = estado_actual | mejor_accion.add_list
+        pasos = pasos + 1
+    return float(pasos)

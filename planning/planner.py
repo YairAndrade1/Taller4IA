@@ -231,9 +231,36 @@ def aStarPlanner(
          Use PriorityQueue with priority = g + h(next_state).
          Track the best g-cost seen for each state to avoid stale expansions.
     """
-    ### Your code here ###
-
-    ### End of your code ###
+    # (1) Versión inicial del código
+    #     ### Your code here ###
+    #
+    #     ### End of your code ###
+    
+    # (2) Prompts utilizados para refinarla
+    # "Por favor ayúdame a implementar A* paso a paso. Usa PriorityQueue de utils.py y maneja explícitamente el costo g y el valor heurístico h. Usa un diccionario para recordar el mejor costo g de cada estado para no repetir."
+    
+    # (3) Versión final del código
+    frontera = PriorityQueue()
+    estado_inicial = problem.getStartState()
+    # Guardamos el mejor costo g para llegar a cada estado
+    mejor_g_visto = {}
+    h_inicial = heuristic(estado_inicial, problem.goal, problem.domain, problem.objects)
+    frontera.push((estado_inicial, []), 0 + h_inicial)
+    while not frontera.isEmpty():
+        estado_actual, acciones_tomadas = frontera.pop()
+        if problem.isGoalState(estado_actual):
+            return acciones_tomadas
+        g_actual = problem.getCostOfActions(acciones_tomadas)
+        if estado_actual in mejor_g_visto and mejor_g_visto[estado_actual] <= g_actual:
+            continue
+        mejor_g_visto[estado_actual] = g_actual
+        for estado_siguiente, accion, costo in problem.getSuccessors(estado_actual):
+            nuevas_acciones = acciones_tomadas + [accion]
+            nuevo_g = problem.getCostOfActions(nuevas_acciones)
+            h = heuristic(estado_siguiente, problem.goal, problem.domain, problem.objects)
+            f = nuevo_g + h
+            frontera.push((estado_siguiente, nuevas_acciones), f)
+    return []
 
 
 # Aliases used by the command-line argument parser
