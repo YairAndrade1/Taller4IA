@@ -180,7 +180,19 @@ def regress(goal_set: State, action: Action) -> State | None:
          Check relevance first, then check for contradictions, then compute.
     """
     ### Your code here ###
+    add_set = set(action.add_list)
+    del_set = set(action.del_list)
+    precond_set = set(action.precond_pos)         
 
+    if not (add_set & goal_set):
+        return None
+
+    if del_set & goal_set:
+        return None
+
+    nuevo_goal = (goal_set - add_set) | precond_set
+    return frozenset(nuevo_goal)
+    
     ### End of your code ###
 
 
@@ -202,9 +214,74 @@ def backwardSearch(problem: Problem) -> list[Action]:
          Skip subgoals that contain static predicates (MedicalPost, Adjacent,
          Pickable) that are false in the initial state — these are dead ends.
     """
+    
+    """
     ### Your code here ###
+    queue = Queue()
+    goal_inicial = problem.goal
+    estado_inicial = problem.getStartState()
+
+    queue.push((goal_inicial, []))
+    visited = {goal_inicial}
+
+    all_actions = get_all_groundings(problem.domain, problem.objects)
+
+    while not queue.isEmpty():
+        goal_actual, acciones = queue.pop()
+
+        if goal_actual.issubset(estado_inicial):
+            return acciones
+
+        for accion in all_actions:
+            nuevo_goal = regress(goal_actual, accion)
+
+            if nuevo_goal is None or nuevo_goal in visited:
+                continue
+
+            visited.add(nuevo_goal)
+            queue.push((nuevo_goal, [accion] + acciones))
+
+    return []
 
     ### End of your code ###
+    """
+    #Codigo original, ahora le pedi a la IA que me ayudara a solucionar un problema con el promt:
+    # Mi backwardSearch es lenta en los mapas por get_all_groundings necesito una versión que optimice los tiempos haciendo podas 
+
+    initial_state = problem.getStartState()
+    all_actions = get_all_groundings(problem.domain, problem.objects)
+    static = {"Adjacent", "MedicalPost", "Pickable"}
+
+    def is_contradictory(g):
+        at_robot = [f for f in g if f[0] == "At" and f[1] == "robot"]
+        if len(at_robot) > 1:
+            return True
+        if ("HandsFree", "robot") in g and any(f[0] == "Holding" for f in g):
+            return True
+        return False
+
+    queue = Queue()
+    start_goal = frozenset(problem.goal)
+    queue.push((start_goal, []))
+    visited = {start_goal}
+
+    while not queue.isEmpty():
+        goal, plan = queue.pop()
+        if goal.issubset(initial_state):
+            return plan
+        for a in all_actions:
+            new_goal = regress(goal, a)
+            if new_goal is None or new_goal in visited:
+                continue
+            if any(f[0] in static and f not in initial_state for f in new_goal):
+                continue
+            if is_contradictory(new_goal):
+                continue
+            visited.add(new_goal)
+            queue.push((new_goal, [a] + plan))
+    return []
+    
+    
 
 
 # ---------------------------------------------------------------------------
