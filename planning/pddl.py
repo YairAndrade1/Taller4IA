@@ -173,7 +173,6 @@ def is_applicable(state: State, action: Action) -> bool:
     """
     ### Your code here ###
     return action.precond_pos.issubset(state) and action.precond_neg.isdisjoint(state)
-    ### End of your code ###
 
 
 def apply_action(state: State, action: Action) -> State:
